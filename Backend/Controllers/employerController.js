@@ -45,7 +45,7 @@ const employerSignupHandler = async (req, res) => {
     }
 };
 
-// Login Handler
+
 const employerLoginHandler = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -83,4 +83,25 @@ const employerLoginHandler = async (req, res) => {
     }
 };
 
-module.exports = { employerLoginHandler, employerSignupHandler };
+const deleteEmpAccout = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Not Authenticated!" });
+        }
+        const userId = user._id;
+
+        const deletedUser = await Employer.findByIdAndDelete({ userId })
+        if (!deletedUser) {
+            return res.status(404).json({ success: false, message: "User not found!" });
+        }
+        await Job.deleteMany({ postedBy: userId })
+        return res.status(200).json({ success: true, message: "Your Account with all the associated Job postings are deleted successfully" });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+
+}
+
+module.exports = { employerLoginHandler, employerSignupHandler , deleteEmpAccout };

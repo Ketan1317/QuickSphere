@@ -64,4 +64,14 @@ const checkAuth = (req, res) => {
     }
 }
 
+const applyingForJob = async (req,res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
+
+
 module.exports = { checkAuth, userLoginHandler, userSignupHandler }

@@ -1,6 +1,7 @@
 const express = require("express");
 const { Job } = require("../Models/job");
 const { getAllProfiles } = require("./profileController");
+const { Employer } = require("../Models/employer");
 
 const createJob = async (req, res) => {
     try {
@@ -16,6 +17,7 @@ const createJob = async (req, res) => {
             jobTitle,
             jobDescription,
             location,
+            isOpen,
             employmentType,
             salaryRange,
             skillsRequired,
@@ -41,6 +43,7 @@ const createJob = async (req, res) => {
             jobDescription,
             location,
             employmentType,
+            isOpen,
             salaryRange,
             skillsRequired,
             postedBy: user._id,
@@ -71,6 +74,7 @@ const updateJob = async (req, res) => {
             jobDescription,
             location,
             employmentType,
+            isOpen,
             salaryRange,
             skillsRequired,
             applicationDeadline
@@ -104,6 +108,7 @@ const updateJob = async (req, res) => {
                 jobTitle,
                 jobDescription,
                 location,
+                isOpen,
                 employmentType,
                 salaryRange,
                 skillsRequired,
@@ -137,19 +142,65 @@ const getEmployerSpecificJobs = async (req, res) => {
     }
 }
 
-const getAllProfiles = async (req,res) => {
+const getAllJobs = async (req, res) => {
     try {
         const user = req.user;
         if (!user || !user._id) {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
-        const allJobs = await Job.find({});
+        const allJobs = await Job.find({isOpen:true});
         res.status(200).json({ success: true, allJobs });
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ success: false, message: error.message });
     }
-
 }
 
-module.exports = { createJob, updateJob, getEmployerSpecificJobs, getAllJobs };
+const togglePosting = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Not Authenticated" });
+        }
+
+        const userId = user._id;
+        const { isOpen } = req.body; 
+
+        const updatedPosting = await Job.findOneAndUpdate({ postedBy: userId },{ isOpen },{ new: true });
+
+        if (!updatedPosting) {
+            return res.status(404).json({ success: false, message: "Job posting not found or unauthorized" });
+        }
+        const action = isOpen ? "opened" : "closed";
+        res.status(200).json({ success: true, message: `Job posting ${action} successfully.`, updatedPosting });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const deleteJobPosting = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Authentication failed. Please log in and try again." });
+        }
+
+        const userId = user._id;
+
+        const deletedJob = await Job.findOneAndDelete({ postedBy: userId }); 
+        if (!deletedJob) {
+            return res.status(404).json({ success: false, message: "No job posting found to delete" });
+        }
+
+        res.status(200).json({success: true,message: `The job titled as '${deletedJob.jobTitle}' has been successfully deleted.`,
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message:error.message});
+    }
+};
+
+
+module.exports = { createJob, updateJob, getEmployerSpecificJobs, getAllJobs , deleteJobPosting , togglePosting };

@@ -12,7 +12,7 @@ const createJob = async (req, res) => {
 
         const userId = user._id;
 
-        const { jobId } = req.params;   // it will be a slug
+        const  jobId  = req.params.jobId;   // it will be a slug
         const {
             jobTitle,
             jobDescription,
@@ -68,7 +68,7 @@ const updateJob = async (req, res) => {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
 
-        const { jobId } = req.params;
+        const  jobId = req.params.jobId;
         const {
             jobTitle,
             jobDescription,
@@ -148,13 +148,63 @@ const getAllJobs = async (req, res) => {
         if (!user || !user._id) {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
-        const allJobs = await Job.find({isOpen:true});
+        const allJobs = await Job.find({ isOpen: true });
         res.status(200).json({ success: true, allJobs });
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 }
+
+const getApplicants = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Not Authenticated" });
+        }
+        const jobId = req.params.jobId;  // params daaldenge jo bhi job ke applicants chaiye huye
+
+        const job = await Job.findById( jobId );
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+        const applicants = job.applicants
+        res.status(200).json({ success: true, applicants })
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+
+}
+
+const selectTheApplicant = async (req,res) => {
+    try {
+        const user = req.user;
+        if(!user || !user._id){
+            res.status(401).json({success:false,message:"Not authorized"})
+        }
+        const { userId } = req.body;
+        const jobId = req.params.jobId; // slug se find krenge
+        const job = await Job.findById( jobId );
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+
+        if (job.selectedApplicants.includes(userId)) {
+            return res.status(400).json({ success: false, message: "User already selected for this job" });
+        }
+
+        job.selectedApplicants.push(userId);
+        await job.save();
+
+        res.status(200).json({success:true,message:`Selected ${user.username} successfully ${job.jobTitle}`})
+        
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+} // doubt
 
 const togglePosting = async (req, res) => {
     try {
@@ -164,9 +214,9 @@ const togglePosting = async (req, res) => {
         }
 
         const userId = user._id;
-        const { isOpen } = req.body; 
+        const { isOpen } = req.body;
 
-        const updatedPosting = await Job.findOneAndUpdate({ postedBy: userId },{ isOpen },{ new: true });
+        const updatedPosting = await Job.findOneAndUpdate({ postedBy: userId }, { isOpen }, { new: true });
 
         if (!updatedPosting) {
             return res.status(404).json({ success: false, message: "Job posting not found or unauthorized" });
@@ -189,18 +239,21 @@ const deleteJobPosting = async (req, res) => {
 
         const userId = user._id;
 
-        const deletedJob = await Job.findOneAndDelete({ postedBy: userId }); 
+        const deletedJob = await Job.findOneAndDelete({ postedBy: userId });
         if (!deletedJob) {
             return res.status(404).json({ success: false, message: "No job posting found to delete" });
         }
 
-        res.status(200).json({success: true,message: `The job titled as '${deletedJob.jobTitle}' has been successfully deleted.`,
+        res.status(200).json({
+            success: true, message: `The job titled as '${deletedJob.jobTitle}' has been successfully deleted.`,
         });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ success: false, message:error.message});
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
 
-module.exports = { createJob, updateJob, getEmployerSpecificJobs, getAllJobs , deleteJobPosting , togglePosting };
+
+
+module.exports = { createJob, updateJob, getEmployerSpecificJobs, getAllJobs, deleteJobPosting, togglePosting , getApplicants };

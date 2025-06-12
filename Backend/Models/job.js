@@ -8,9 +8,13 @@ const jobSchema = new mongoose.Schema({
     applicants: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User", 
+            ref: "User",
         }
     ],
+    selectedApplicants: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    }],
     jobTitle: {
         type: String,
         required: true,

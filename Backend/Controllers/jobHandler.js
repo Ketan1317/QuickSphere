@@ -12,7 +12,7 @@ const createJob = async (req, res) => {
 
         const userId = user._id;
 
-        const  jobId  = req.params.jobId;   // it will be a slug
+        const jobId = req.params.jobId;   // it will be a slug
         const {
             jobTitle,
             jobDescription,
@@ -34,7 +34,7 @@ const createJob = async (req, res) => {
             !skillsRequired ||
             !applicationDeadline
         ) {
-            return res.status(400).json({ success: false, message: "All fields are required." });
+            return res.status(401).json({ success: false, message: "All fields are required." });
         }
 
         const job = await Job.create({
@@ -68,7 +68,7 @@ const updateJob = async (req, res) => {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
 
-        const  jobId = req.params.jobId;
+        const jobId = req.params.jobId;
         const {
             jobTitle,
             jobDescription,
@@ -90,7 +90,7 @@ const updateJob = async (req, res) => {
             !skillsRequired &&
             !applicationDeadline
         ) {
-            return res.status(400).json({ success: false, message: "At least one field is required for updating" });
+            return res.status(401).json({ success: false, message: "At least one field is required for updating" });
         }
 
         const job = await Job.findById(jobId);
@@ -133,7 +133,11 @@ const getEmployerSpecificJobs = async (req, res) => {
         }
         const userId = user._id;
 
-        const userSpecificJobs = await Job.findById({ postedBy: userId });
+        const userSpecificJobs = await Job.find({ postedBy: userId })
+            .populate("applicants", "username email") // Replace ObjectId with the User documents (include only username and email)
+            .populate("selectedApplicants", "username email")
+            .populate("postedBy", "companyName");
+
         res.status(200).json({ success: true, userSpecificJobs });
 
     } catch (error) {
@@ -148,7 +152,7 @@ const getAllJobs = async (req, res) => {
         if (!user || !user._id) {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
-        const allJobs = await Job.find({ isOpen: true });
+        const allJobs = await Job.find({ isOpen: true }).populate("postedBy", "companyName email");;
         res.status(200).json({ success: true, allJobs });
     } catch (error) {
         console.error(error.message);
@@ -164,7 +168,8 @@ const getApplicants = async (req, res) => {
         }
         const jobId = req.params.jobId;  // params daaldenge jo bhi job ke applicants chaiye huye
 
-        const job = await Job.findById( jobId );
+        const job = await Job.findById(jobId).populate("applicants", "username email");
+
         if (!job) {
             return res.status(404).json({ success: false, message: "Job not found" });
         }
@@ -178,33 +183,99 @@ const getApplicants = async (req, res) => {
 
 }
 
-const selectTheApplicant = async (req,res) => {
+const selectTheApplicant = async (req, res) => {
     try {
         const user = req.user;
-        if(!user || !user._id){
-            res.status(401).json({success:false,message:"Not authorized"})
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Not authorized" });
         }
+        // ja render krenge usmein se uthayenge
         const { userId } = req.body;
-        const jobId = req.params.jobId; // slug se find krenge
-        const job = await Job.findById( jobId );
+        const jobId = req.params.jobId;
+
+        const job = await Job.findById(jobId)
         if (!job) {
             return res.status(404).json({ success: false, message: "Job not found" });
         }
 
+        if (!job.applicants.includes(userId)) {
+            return res.status(401).json({ success: false, message: "User has not applied for this job", });
+        }
+
         if (job.selectedApplicants.includes(userId)) {
-            return res.status(400).json({ success: false, message: "User already selected for this job" });
+            return res.status(401).json({
+                success: false,
+                message: "User already selected for this job",
+            });
         }
 
         job.selectedApplicants.push(userId);
         await job.save();
 
-        res.status(200).json({success:true,message:`Selected ${user.username} successfully ${job.jobTitle}`})
-        
+        res.status(200).json({ success: true, message: `User with ID ${userId} successfully selected for the job "${job.jobTitle}`, });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: "Server error." });
     }
-} // doubt
+};
+const rejectTheApplicant = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Not authorized" });
+        }
+        // ja render krenge usmein se uthayenge
+        const { userId } = req.body;
+        const jobId = req.params.jobId;
+
+        const job = await Job.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+
+        if (!job.applicants.includes(userId)) {
+            return res.status(401).json({ success: false, message: "User has not applied for this job", });
+        }
+
+        if (job.selectedApplicants.includes(userId)) {
+            return res.status(401).json({
+                success: false,
+                message: "User already selected for this job",
+            });
+        }
+
+        job.applicants = job.applicants.filter((applicantId) => applicantId.toString() !== userId); // yaha vo user applicants list se nikal denge jo rejct kiya gya hai
+        await job.save();
+
+        res.status(200).json({ success: true, message: `User with ID ${userId} successfully selected for the job "${job.jobTitle}`, });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+
+}
+
+
+// chatGpt
+const closeExpiredJobs = async (req, res) => {
+    try {
+        const currentDate = new Date(); // Get current date and time
+
+        // Update jobs that are open and past the application deadline
+        const expiredJobs = await Job.updateMany(
+            { isOpen: true, applicationDeadline: { $lt: currentDate } },
+            { isOpen: false }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `${expiredJobs.modifiedCount} job postings closed due to expiration.`,
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+};
 
 const togglePosting = async (req, res) => {
     try {
@@ -213,10 +284,10 @@ const togglePosting = async (req, res) => {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
 
-        const userId = user._id;
+        const jobId = req.params.jobId;
         const { isOpen } = req.body;
 
-        const updatedPosting = await Job.findOneAndUpdate({ postedBy: userId }, { isOpen }, { new: true });
+        const updatedPosting = await Job.findOneAndUpdate({ jobId }, { isOpen }, { new: true });
 
         if (!updatedPosting) {
             return res.status(404).json({ success: false, message: "Job posting not found or unauthorized" });
@@ -256,4 +327,4 @@ const deleteJobPosting = async (req, res) => {
 
 
 
-module.exports = { createJob, updateJob, getEmployerSpecificJobs, getAllJobs, deleteJobPosting, togglePosting , getApplicants };
+module.exports = { createJob, updateJob, rejectTheApplicant, getEmployerSpecificJobs, getAllJobs, deleteJobPosting, togglePosting, getApplicants, selectTheApplicant, closeExpiredJobs };

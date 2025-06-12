@@ -69,11 +69,11 @@ const applyingForJob = async (req, res) => {
     try {
         const user = req.user;
         if (!user || !user._id) {
-            return res.status(402).json({ success: false, message: "Not Authenticated" })
+            return res.status(403).json({ success: false, message: "Not Authenticated" })
         }
         const userId = user._id;
         const jobId = req.params.jobId // params mein daldenge jobId
-        const job = await Job.findById( jobId )
+        const job = await Job.findById(jobId)
 
         if (!job) {
             return res.status(404).json({ success: false, message: "Job Not available" })
@@ -88,11 +88,111 @@ const applyingForJob = async (req, res) => {
         res.status(200).json({ success: true, message: "Successfully applied for the job" });
 
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
         res.status(500).json({ success: false, message: error.message });
     }
 }
 
+const markJobFavourite = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(403).json({ success: false, message: "Not Athenticated" })
+        }
+        const jobId = req.params.jobId;
+
+        const userData = await User.findById(user._id);
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: "User not Found" })
+        }
+
+         if (userData.favJobs.includes(jobId)) {
+            return res.status(400).json({ success: false, message: "Job already in favorites" });
+        }
+
+        userData.favJobs.push(jobId);
+        await userData.save();
+
+        res.status(200).json({ success: true, message: "Added to favourites successfully" });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message })
+    }
+
+}
+
+const unmarkJobFavourite = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(403).json({ success: false, message: "Not Athenticated" })
+        }
+        const jobId = req.params.jobId;
+
+        const userData = await User.findById(user._id);
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: "User not Found" })
+        }
+
+         if (!userData.favJobs.includes(jobId)) {
+            return res.status(400).json({ success: false, message: "Job is not even in favorites" });
+        }
+
+        userData.favJobs = userData.favJobs.filter((Id) => Id.toString() !== jobId)
+        await userData.save();
+
+        res.status(200).json({ success: true, message: "Removed from favourites" });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message })
+    }
+
+}
+
+const getFavouriteJobs = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(403).json({ success: false, message: "User not Found" })
+        }
+
+        const userData = await User.findById(user._id).populate("favJobs");
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: "No Such User is available" })
+        }
+
+        res.status(200).json({ success: true, favJobs: userData.favJobs });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message })
+    }
+}
+
+const getAllJobsAppliedFor = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(403).json({ success: false, message: "User not Found" })
+        }
+
+        const userData = await User.findById(user._id).populate("appliedJobs");
+
+        if (!userData) {
+            return res.status(404).json({ success: false, message: "No Such User is available" })
+        }
+
+        res.status(200).json({ success: true, appliedJobs: userData.appliedJobs });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message })
+    }
+
+}
 
 
-module.exports = { checkAuth, userLoginHandler, userSignupHandler, applyingForJob }
+
+module.exports = { checkAuth, userLoginHandler, userSignupHandler, applyingForJob, markJobFavourite, unmarkJobFavourite , getAllJobsAppliedFor, getFavouriteJobs }

@@ -33,6 +33,12 @@ const profileSchema = new mongoose.Schema({
         type: [String], // Array of strings
         required:true
     },
+    shortlistedBy: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Employer",
+        }
+    ],
     experience: {
         type: String,
         enum: ["Fresher", "1-3 years", "3-5 years", "5-10 years", "10+ years"], // Restrict to these values

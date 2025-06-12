@@ -8,12 +8,12 @@ const employerSignupHandler = async (req, res) => {
         const { username, email, password, companyName, websiteUrl } = req.body;
 
         if (!username || !email || !password || !companyName || !websiteUrl) {
-            return res.status(400).json({ success: false, message: "Insufficient Credentials" });
+            return res.status(401).json({ success: false, message: "Insufficient Credentials" });
         }
 
         const user = await Employer.findOne({ email });
         if (user) {
-            return res.status(409).json({ success: false, message: "Email already in use" });
+            return res.status(401).json({ success: false, message: "Email already in use" });
         }
 
         const hashedPass = await bcrypt.hash(password, 10);
@@ -51,7 +51,7 @@ const employerLoginHandler = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ success: false, message: "Insufficient Credentials" });
+            return res.status(401).json({ success: false, message: "Insufficient Credentials" });
         }
 
         const user = await Employer.findOne({ email });

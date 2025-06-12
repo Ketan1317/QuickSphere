@@ -1,4 +1,3 @@
-const express = require("express");
 const { User } = require("../Models/user");
 const bcrypt = require("bcrypt")
 const { createToken, verifyToken } = require("../Services/tokens");
@@ -55,6 +54,27 @@ const userLoginHandler = async (req, res) => {
 
     }
 }
+const deleteUserAccount = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(403).json({ success: false, message: "Not Authenticated" })
+        }
+        const userId = user._id;
+        const deletedAcc = await User.findByIdAndDelete(userId);
+        if (!deletedAccount) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        res.status(200).json({ success: true, message: "Account deleted Successfully" });
+
+
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).json({ success: false, message: error.message });
+
+    }
+
+}
 
 const checkAuth = (req, res) => {
     try {
@@ -107,7 +127,7 @@ const markJobFavourite = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not Found" })
         }
 
-         if (userData.favJobs.includes(jobId)) {
+        if (userData.favJobs.includes(jobId)) {
             return res.status(400).json({ success: false, message: "Job already in favorites" });
         }
 
@@ -136,7 +156,7 @@ const unmarkJobFavourite = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not Found" })
         }
 
-         if (!userData.favJobs.includes(jobId)) {
+        if (!userData.favJobs.includes(jobId)) {
             return res.status(400).json({ success: false, message: "Job is not even in favorites" });
         }
 
@@ -195,4 +215,4 @@ const getAllJobsAppliedFor = async (req, res) => {
 
 
 
-module.exports = { checkAuth, userLoginHandler, userSignupHandler, applyingForJob, markJobFavourite, unmarkJobFavourite , getAllJobsAppliedFor, getFavouriteJobs }
+module.exports = { checkAuth, userLoginHandler,deleteUserAccount , userSignupHandler, applyingForJob, markJobFavourite, unmarkJobFavourite, getAllJobsAppliedFor, getFavouriteJobs }

@@ -19,11 +19,12 @@ employRouter.post("/select-applicants/",protectRoutes,verifyRole("Employer"),sel
 employRouter.post("/reject-applicant",protectRoutes,verifyRole("Employer"),rejectTheApplicant);
 
 employRouter.post("/close-expiredJobs",protectRoutes,verifyRole("Employer"),closeExpiredJobs);
+
 employRouter.post("/shortlisting-profile",protectRoutes,verifyRole("Employer"),profileShortlisted);
 
 
 
-employRouter.get("/get-emp-specific",protectRoutes,verifyRole("Employer"),getEmployerSpecificJobs);
+employRouter.get("/get-emp-specific-jobs",protectRoutes,verifyRole("Employer"),getEmployerSpecificJobs);
 employRouter.get("/get-applicants/:jobId",protectRoutes,verifyRole("Employer"),getApplicants);
 employRouter.get("/get-all-profiles",protectRoutes,verifyRole("Employer"),getAllProfiles);
 

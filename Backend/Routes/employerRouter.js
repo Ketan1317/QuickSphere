@@ -8,9 +8,10 @@ const employRouter = express.Router();
 
 employRouter.post("/employer-login",employerLoginHandler);
 employRouter.post("/employer-signup",employerSignupHandler);
-employRouter.post("/delete-account",protectRoutes,verifyRole("Employer"),deleteEmpAccout)
+employRouter.post("/employer-delAcc",protectRoutes,verifyRole("Employer"),deleteEmpAccout)
 
-employRouter.post("/create-job/:jobId",protectRoutes,verifyRole("Employer"),createJob);
+employRouter.post("/create-job/:jobId", protectRoutes, verifyRole("Employer"), createJob);
+
 employRouter.post("/update-job/:jobId",protectRoutes,verifyRole("Employer"),updateJob);
 employRouter.post("/delete-job/:jobId",protectRoutes,verifyRole("Employer"),deleteJobPosting);
 employRouter.post("/toggle-job/:jobId",protectRoutes,verifyRole("Employer"),togglePosting);
@@ -28,6 +29,7 @@ employRouter.get("/get-emp-specific-jobs",protectRoutes,verifyRole("Employer"),g
 employRouter.get("/get-applicants/:jobId",protectRoutes,verifyRole("Employer"),getApplicants);
 employRouter.get("/get-all-profiles",protectRoutes,verifyRole("Employer"),getAllProfiles);
 
+module.exports = {employRouter}
 
 
 
@@ -38,5 +40,5 @@ employRouter.get("/get-all-profiles",protectRoutes,verifyRole("Employer"),getAll
 
 
 
-employRouter.post("/create-job/:jobId",);
+
 

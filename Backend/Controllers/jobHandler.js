@@ -169,6 +169,7 @@ const getApplicants = async (req, res) => {
         const jobId = req.params.jobId;  // params daaldenge jo bhi job ke applicants chaiye huye
 
         const job = await Job.findById(jobId).populate("applicants", "username email");
+       // find the profile with that username
 
         if (!job) {
             return res.status(404).json({ success: false, message: "Job not found" });

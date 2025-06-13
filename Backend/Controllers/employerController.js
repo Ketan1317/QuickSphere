@@ -6,6 +6,7 @@ const { Employer } = require("../Models/employer");
 const employerSignupHandler = async (req, res) => {
     try {
         const { username, email, password, companyName, websiteUrl } = req.body;
+        console.log(req.body)
 
         if (!username || !email || !password || !companyName || !websiteUrl) {
             return res.status(401).json({ success: false, message: "Insufficient Credentials" });
@@ -91,7 +92,7 @@ const deleteEmpAccout = async (req, res) => {
         }
         const userId = user._id;
 
-        const deletedUser = await Employer.findByIdAndDelete({ userId })
+        const deletedUser = await Employer.findByIdAndDelete( userId )
         if (!deletedUser) {
             return res.status(404).json({ success: false, message: "User not found!" });
         }

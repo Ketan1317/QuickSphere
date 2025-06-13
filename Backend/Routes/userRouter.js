@@ -7,8 +7,8 @@ const { getAllJobs } = require("../Controllers/jobHandler");
 const { handleProfileChange, getAllProfiles, getShortlistedEmployers } = require("../Controllers/profileController");
 const UserRouter = express.Router();
 
-UserRouter.post("/user-login",userLoginHandler)
-UserRouter.post("/user-signup",userSignupHandler)
+UserRouter.post("/jobSeeker-login",userLoginHandler)
+UserRouter.post("/jobSeeker-signup",userSignupHandler)
 // DELETE 
 UserRouter.post("/applying-4-job/:jobId",protectRoutes,verifyRole("jobSeeker"),applyingForJob)
 
@@ -20,7 +20,7 @@ UserRouter.get("/get-jobs-applied4",protectRoutes,verifyRole("jobSeeker"),getAll
 
 
 UserRouter.post("/update-profile",protectRoutes,verifyRole("jobSeeker"),handleProfileChange)
-UserRouter.post("/delete-userAcc",protectRoutes,verifyRole("jobSeeker"),deleteEmpAccout)
+UserRouter.post("/jobSeeker-delAcc",protectRoutes,verifyRole("jobSeeker"),deleteEmpAccout)
 
 
 UserRouter.post("/mark-favourite",protectRoutes,verifyRole("jobSeeker"),markJobFavourite)

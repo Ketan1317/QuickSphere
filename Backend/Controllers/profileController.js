@@ -17,12 +17,14 @@ const handleProfileChange = async (req, res) => {
         let profileData;
         const isAlreadyExist = await Profile.findOne({ profileId: userId });
         if (isAlreadyExist) {
-            profileData = await Profile.findByIdAndUpdate({ profileId: userId }, { bio, skills, experience, githubUrl, linkedinUrl }, { new: true })
+            profileData = await Profile.findByIdAndUpdate({ profileId: userId }, { bio, skills, experience, githubUrl, linkedinUrl }, { new: true });
+            return res.status(200).json({ success: true, message: "Profile updated successfully", profileData });
         }
         else {
-            profileData = await Profile.create({ bio, skills, experience, githubUrl, linkedinUrl, profileId: userId })
+            profileData = await Profile.create({ bio, skills, experience, githubUrl, linkedinUrl, profileId: userId });
+            return res.status(200).json({ success: true, message: "Profile created successfully", profileData })
         }
-        res.status(200).json({ success: true, message: "Profile updated successfully", profileData })
+        
 
     } catch (error) {
         console.error(error.message);

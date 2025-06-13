@@ -20,7 +20,8 @@ const employerSchema = new mongoose.Schema({
     },
     websiteUrl : {
          type: String,
-        required: true
+        required: true,
+        match: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
     },
     role: {
         type: String,

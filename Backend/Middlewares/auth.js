@@ -3,22 +3,33 @@ const { verifyToken } = require("../Services/tokens");
 const { User } = require("../Models/user");
 
 const protectRoutes = async (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startWith("Bearer ")) {
-            res.status(500).json({ success: false, message: "Not Authenticated" });
-        }
-        const token = authHeader.split(" ")[1];
-        const payload = verifyToken(token);
-        const user = await User.findOne({ email: payload.email }).select("-password");
-
-        req.user = user;
-        next();
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) { // Fixed typo: startWith -> startsWith
+      return res.status(401).json({ success: false, message: "Not Authenticated" }); // Changed status to 401
     }
 
-}
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Token missing" });
+    }
 
-module.exports = {protectRoutes}
+    const payload = verifyToken(token);
+    if (!payload || !payload.email) {
+      return res.status(401).json({ success: false, message: "Invalid token payload" });
+    }
+
+    const user = await User.findOne({ email: payload.email }).select("-password");
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found" });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error("Protect routes error:", error.message); // Added logging for debugging
+    return res.status(401).json({ success: false, message: "Authentication failed: " + error.message }); // Changed status to 401
+  }
+};
+
+module.exports = { protectRoutes };

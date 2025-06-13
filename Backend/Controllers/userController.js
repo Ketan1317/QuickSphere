@@ -78,13 +78,19 @@ const deleteUserAccount = async (req, res) => {
 }
 
 const checkAuth = (req, res) => {
-    try {
-        const user = req.user
-        return res.status(200).json({ success: true, user });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    console.log("checkAuth: Received request, req.user:", req.user);
+    const user = req.user;
+    if (!user) {
+      console.log("checkAuth: No user found in req.user");
+      return res.status(401).json({ success: false, message: "User not authenticated" });
     }
-}
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("checkAuth: Error:", error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 const applyingForJob = async (req, res) => {
     try {

@@ -14,8 +14,10 @@ export const AuthProvider = ({ children }) => {
   const [resume, setResume] = useState(null);
 
   useEffect(() => {
-    if (token) {
+
+    if (localStorage.getItem("token")) {
       axios.defaults.headers.common["authorization"] = `Bearer ${token}`;
+      setToken(token)
       checkAuth();
     } else {
       setAuthUser(null);
@@ -26,7 +28,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/check-auth`);
+      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/check-auth`);
       if (data.success) {
         setAuthUser(data.user);
       } else {

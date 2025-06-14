@@ -13,63 +13,57 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [resume, setResume] = useState(null);
 
-  useEffect(() => {
-
-    if (localStorage.getItem("token")) {
-      axios.defaults.headers.common["authorization"] = `Bearer ${token}`;
-      checkAuth();
-    } else {
-      setAuthUser(null);
-      setToken(null);
-      navigate("/");
-    }
-  }, [token]);
-
-  useEffect(() => {
-
-    if (localStorage.getItem("token")) {
-      axios.defaults.headers.common["authorization"] = `Bearer ${token}`;
-      checkAuth();
-    } else {
-      setAuthUser(null);
-      setToken(null);
-      navigate("/");
-    }
-  }, []);
 
   
 
-  const checkAuth = async () => {
+ const checkAuth = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/check-auth`);
-      if (data.success) {
-        setAuthUser(data.user);
+      const res = await axios.get(`${`http://localhost:3001`}/api/check-auth`, {
+        headers: {
+          authorization: `Bearer ${token}`
+        }
+      });
+      console.log(res.data)
+      if (res.data.success === true) {
+        setAuthUser(res.data.user);
       } else {
-        handleAuthFailure("Session expired...Please log in again");
+        setAuthUser(null);
+        toast.error("Not authenticated");
+        navigate("/");
       }
     } catch (error) {
-      handleAuthFailure(error.message);
+      setAuthUser(null);
+        setToken(null)
+        toast.error("Not authenticated");
+        navigate("/");
+      // localStorage.removeItem("token");
+      // setAuthUser(null);
+      // setToken(null);
+      // toast.error(error.message || "Authentication check failed");
+      // navigate("/");
     }
   };
 
-  const handleAuthFailure = (message) => {
-    localStorage.removeItem("token");
-    setAuthUser(null);
-    setToken(null);
-    toast.error(message);
-    navigate("/");
-  };
+  // const handleAuthFailure = (message) => {
+  //   localStorage.removeItem("token");
+  //   setAuthUser(null);
+  //   setToken(null);
+  //   toast.error(message);
+  //   navigate("/");
+  // };
 
   const login = async (body, userType) => {
     try {
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/${userType}-login`,
+        `${`http://localhost:3001`}/${userType}-login`,
         body
       );
       if (data.success) {
         setAuthUser(data.user);
         setToken(data.token);
-        localStorage.setItem("token", data.token);
+        console.log("I am in login sucess page")
+        localStorage.setItem("token1", data.token);
+        console.log(data.token)
         axios.defaults.headers.common["authorization"] = `Bearer ${data.token}`;
         toast.success(data.message || "Login successfully");
       } else {
@@ -83,13 +77,13 @@ export const AuthProvider = ({ children }) => {
   const signup = async (body, userType) => {
     try {
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/${userType}-signup`,
+        `${`http://localhost:3001`}/${userType}-signup`,
         body
       );
       if (data.success) {
         setAuthUser(data.user);
         setToken(data.token);
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token1", data.token);
         axios.defaults.headers.common["authorization"] = `Bearer ${data.token}`;
         toast.success(data.message || "Account created successfully");
       } else {
@@ -101,13 +95,35 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("token1");
+    console.log('i a m in delete')
     delete axios.defaults.headers.common["authorization"];
     setAuthUser(null);
     setToken(null);
     toast.success("Logout successfully");
     navigate("/");
   };
+
+  
+useEffect(() => {
+  const token1 = localStorage.getItem("token1");
+  console.log("Token in localStorage: " + token1);
+
+  if (token1) {
+    setToken(token1);
+  } else {
+    navigate("/");
+  }
+}, []); 
+
+
+useEffect(() => {
+  if (token) {
+    console.log("Token found: " + token);
+    checkAuth();
+  }
+}, [token]); 
+
 
   const value = {
     signup,

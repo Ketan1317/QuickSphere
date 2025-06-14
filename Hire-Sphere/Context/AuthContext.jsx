@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
 
     if (localStorage.getItem("token")) {
       axios.defaults.headers.common["authorization"] = `Bearer ${token}`;
-      setToken(token)
       checkAuth();
     } else {
       setAuthUser(null);
@@ -25,6 +24,20 @@ export const AuthProvider = ({ children }) => {
       navigate("/");
     }
   }, [token]);
+
+  useEffect(() => {
+
+    if (localStorage.getItem("token")) {
+      axios.defaults.headers.common["authorization"] = `Bearer ${token}`;
+      checkAuth();
+    } else {
+      setAuthUser(null);
+      setToken(null);
+      navigate("/");
+    }
+  }, []);
+
+  
 
   const checkAuth = async () => {
     try {

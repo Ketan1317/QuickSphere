@@ -5,9 +5,12 @@ const { User } = require("../Models/user");
 const protectRoutes = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) { // Fixed typo: startWith -> startsWith
-      return res.status(401).json({ success: false, message: "Not Authenticated" }); // Changed status to 401
+    console.log(1);
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) { 
+      return res.status(401).json({ success: false, message: "Not Authenticated" }); 
     }
+    console.log(2);
 
     const token = authHeader.split(" ")[1];
     if (!token) {

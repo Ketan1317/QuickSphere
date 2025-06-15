@@ -4,61 +4,99 @@ const { getAllProfiles } = require("./profileController");
 const { Employer } = require("../Models/employer");
 
 const createJob = async (req, res) => {
-    try {
-        const user = req.user;
-        if (!user || !user._id) {
-            return res.status(401).json({ success: false, message: "Not Authenticated" });
-        }
-
-        const userId = user._id;
-
-        const jobId = req.params.jobId;   // it will be a slug
-        const {
-            jobTitle,
-            jobDescription,
-            location,
-            isOpen,
-            employmentType,
-            salaryRange,
-            skillsRequired,
-            applicationDeadline,
-        } = req.body;
-
-        // Validate required fields
-        if (
-            !jobTitle ||
-            !jobDescription ||
-            !location ||
-            !employmentType ||
-            !salaryRange ||
-            !skillsRequired ||
-            !applicationDeadline
-        ) {
-            return res.status(401).json({ success: false, message: "All fields are required." });
-        }
-
-        const job = await Job.create({
-            jobId: jobId, // it will be a slug
-            jobTitle,
-            jobDescription,
-            location,
-            employmentType,
-            isOpen,
-            salaryRange,
-            skillsRequired,
-            postedBy: user._id,
-            companyName: user.companyName,
-            postedAt: new Date(),
-            applicationDeadline: new Date(applicationDeadline),
-        });
-
-
-        res.status(201).json({ success: true, message: "Job posted successfully.", job });
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const user = req.user;
+    if (!user || !user._id) {
+      return res.status(401).json({ success: false, message: "Not Authenticated" });
     }
+
+    const userId = user._id;
+    const jobId = req.params.jobId; // Slug from the route
+
+    const {
+      jobTitle,
+      jobDescription,
+      location,
+      isOpen = true, 
+      employmentType,
+      salaryRange,
+      skillsRequired,
+      applicationDeadline,
+      companyName
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !jobId ||
+      !jobTitle ||
+      !jobDescription ||
+      !location ||
+      !employmentType ||
+      !salaryRange ||
+      !skillsRequired ||
+      !applicationDeadline || !companyName
+    ) {
+      return res.status(400).json({ success: false, message: "All fields are required." });
+    }
+
+    // Validate salaryRange structure
+    if (!salaryRange.min || !salaryRange.max) {
+      return res.status(400).json({ success: false, message: "Salary range must include both minimum and maximum values." });
+    }
+
+    // Validate salary range logic
+    if (salaryRange.min >= salaryRange.max) {
+      return res.status(400).json({ success: false, message: "Minimum salary must be less than maximum salary." });
+    }
+
+
+    // Validate skillsRequired is a non-empty array
+    if (!Array.isArray(skillsRequired) || skillsRequired.length === 0) {
+      return res.status(400).json({ success: false, message: "Skills required must be a non-empty array." });
+    }
+
+    // Validate applicationDeadline is a future date
+    const deadline = new Date(applicationDeadline);
+    const now = new Date(); 
+    if (isNaN(deadline.getTime()) || deadline <= now) {
+      return res.status(400).json({
+        success: false,
+        message: "Application deadline must be a valid future date.",
+      });
+    }
+
+    const job = await Job.create({
+      jobId, 
+      jobTitle,
+      jobDescription,
+      location,
+      employmentType,
+      companyName, 
+      isOpen,
+      salaryRange: {
+        min: salaryRange.min,
+        max: salaryRange.max,
+      },
+      skillsRequired,
+      postedBy: userId,
+      postedAt: new Date(),
+      applicationDeadline: deadline,
+    });
+
+    res.status(201).json({ success: true, message: "Job posted successfully.", job });
+  } catch (error) {
+    console.error("createJob error:", error.message);
+    if (error.code === 11000) {
+      // Duplicate key error (e.g., jobId already exists)
+      return res.status(400).json({
+        success: false,
+        message: "Job ID already exists. Please use a unique Job ID.",
+      });
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
+
 
 
 const updateJob = async (req, res) => {
@@ -123,7 +161,27 @@ const updateJob = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+//
 
+const getJobBySlug = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ success: false, message: "Not Authenticated" });
+        }
+        const userId = user._id;
+        const JobId = req.params.jobId;
+
+        const jobBySlug = await Job.findOne({ jobId:JobId })
+            .populate("postedBy", "companyName");
+
+        res.status(200).json({ success: true, jobBySlug });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
 
 const getEmployerSpecificJobs = async (req, res) => {
     try {
@@ -131,12 +189,11 @@ const getEmployerSpecificJobs = async (req, res) => {
         if (!user || !user._id) {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
+        console.log("jobs ke andr")
         const userId = user._id;
 
         const userSpecificJobs = await Job.find({ postedBy: userId })
             .populate("applicants", "username email") // Replace ObjectId with the User documents (include only username and email)
-            .populate("selectedApplicants", "username email")
-            .populate("postedBy", "companyName");
 
         res.status(200).json({ success: true, userSpecificJobs });
 
@@ -149,10 +206,12 @@ const getEmployerSpecificJobs = async (req, res) => {
 const getAllJobs = async (req, res) => {
     try {
         const user = req.user;
+        console.log("trying to fetch jobs")
         if (!user || !user._id) {
             return res.status(401).json({ success: false, message: "Not Authenticated" });
         }
-        const allJobs = await Job.find({ isOpen: true }).populate("postedBy", "companyName email");;
+        const allJobs = await Job.find({ isOpen: true }).populate("postedBy", "companyName email");
+        // console.log(allJobs)
         res.status(200).json({ success: true, allJobs });
     } catch (error) {
         console.error(error.message);
@@ -161,28 +220,34 @@ const getAllJobs = async (req, res) => {
 }
 
 const getApplicants = async (req, res) => {
-    try {
-        const user = req.user;
-        if (!user || !user._id) {
-            return res.status(401).json({ success: false, message: "Not Authenticated" });
-        }
-        const jobId = req.params.jobId;  // params daaldenge jo bhi job ke applicants chaiye huye
-
-        const job = await Job.findById(jobId).populate("applicants", "username email");
-       // find the profile with that username
-
-        if (!job) {
-            return res.status(404).json({ success: false, message: "Job not found" });
-        }
-        const applicants = job.applicants
-        res.status(200).json({ success: true, applicants })
-
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const user = req.user;
+    if (!user || !user._id) {
+      return res.status(401).json({ success: false, message: "Not Authenticated" });
     }
 
-}
+    const jobId = req.params.jobId; // Custom jobId from the URL
+    const employerId = user._id; // Employer who is requesting the applicants
+
+    const job = await Job.findOne({ jobId, postedBy: employerId }).populate(
+      "applicants",
+      "username email"
+    );
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found or you are not authorized to view its applicants",
+      });
+    }
+
+    const applicants = job.applicants;
+    res.status(200).json({ success: true, applicants });
+  } catch (error) {
+    console.error("Error in getApplicants:", error.message);
+    res.status(500).json({ success: false, message: "Server error while fetching applicants" });
+  }
+};
 
 const selectTheApplicant = async (req, res) => {
     try {
@@ -328,4 +393,4 @@ const deleteJobPosting = async (req, res) => {
 
 
 
-module.exports = { createJob, updateJob, rejectTheApplicant, getEmployerSpecificJobs, getAllJobs, deleteJobPosting, togglePosting, getApplicants, selectTheApplicant, closeExpiredJobs };
+module.exports = { createJob, updateJob, rejectTheApplicant,getJobBySlug, getEmployerSpecificJobs, getAllJobs, deleteJobPosting, togglePosting, getApplicants, selectTheApplicant, closeExpiredJobs };

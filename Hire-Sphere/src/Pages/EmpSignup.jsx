@@ -5,7 +5,7 @@ import { TbLockPassword } from "react-icons/tb";
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { FaRegUserCircle } from "react-icons/fa";
 import { GoSignIn } from "react-icons/go";
-import { AuthContext } from "../../Context/AuthContext";
+import { EmpContext } from "../../Context/EmpContext";
 import { CiLink } from "react-icons/ci";
 
 const EmpSignup = () => {
@@ -16,15 +16,15 @@ const EmpSignup = () => {
   const [website, setWebsite] = useState("");
   const navigate = useNavigate();
 
-  const { signup } = useContext(AuthContext);
+  const { empSignup } = useContext(EmpContext);
   
   const submitHandler = (e) => {
     e.preventDefault();
 
     const body = { username: name, email: email, password: pass, companyName : company, websiteUrl : website };
-    const userType = "emp/employer";
-// Doubt
-    signup(body, userType);
+
+    
+    empSignup(body);
 
     setEmail("");
     setName("");

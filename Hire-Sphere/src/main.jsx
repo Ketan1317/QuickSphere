@@ -4,11 +4,14 @@ import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App.jsx";
 import { AuthProvider } from "../Context/AuthContext.jsx";
+import { EmpProvider } from "../Context/EmpContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <EmpProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </EmpProvider>
   </BrowserRouter>
 );

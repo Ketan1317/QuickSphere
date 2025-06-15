@@ -10,14 +10,13 @@ const UserLogin = () => {
   const [pass, setPass] = useState("");
   const navigate = useNavigate();
 
-  const { login } = useContext(AuthContext);
+  const { userLogin } = useContext(AuthContext);
 
   const formSubmitHandler = (e) => {
     e.preventDefault();
-    const userType = "api/jobSeeker";
     const body = { email, password: pass };
 
-    login(body, userType);
+    userLogin(body);
     setEmail("");
     setPass("");
   };

@@ -6,28 +6,25 @@ import { FaRegUserCircle } from "react-icons/fa";
 import { GoSignIn } from "react-icons/go";
 import { AuthContext } from "../../Context/AuthContext";
 
-
 const UserSignup = () => {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [name, setName] = useState("");
   const navigate = useNavigate();
 
-  const {signup} = useContext(AuthContext);
+  const { userSignup } = useContext(AuthContext);
 
   const submitHandler = (e) => {
     e.preventDefault();
 
-    const body = {username:name,email:email,password:pass};
-    const userType = "api/jobSeeker";
+    const body = { username: name, email: email, password: pass };
 
-    signup(body,userType);
+    userSignup(body);
 
-    setEmail("")
-    setName("")
-    setPass("")
-
-  }
+    setEmail("");
+    setName("");
+    setPass("");
+  };
 
   return (
     <div className="bg-gradient-to-b from-black to-gray-900 h-screen fixed w-full flex flex-col items-center">
@@ -36,19 +33,20 @@ const UserSignup = () => {
       </nav>
 
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-[#39FF14]">
-          Create an Account
-        </h2>
+        <h2 className="text-3xl font-bold text-[#39FF14]">Create an Account</h2>
         <p className="text-gray-400 font-semibold mt-2">
           Join HireSphere as a Jobseeker and explore exciting opportunities.
         </p>
       </div>
 
-      <form onSubmit={submitHandler} className="bg-gray-900 bg-opacity-90 p-8 rounded-2xl shadow-lg text-white w-[90%] sm:w-[30vw]">
+      <form
+        onSubmit={submitHandler}
+        className="bg-gray-900 bg-opacity-90 p-8 rounded-2xl shadow-lg text-white w-[90%] sm:w-[30vw]"
+      >
         <p className="text-center text-xl font-semibold mb-4 flex items-center justify-center gap-2">
-  <span className="text-[#39FF14] font-bold">Signup</span>
-  <GoSignIn className="text-[#39FF14] text-2xl animate-bounce" />
-</p>
+          <span className="text-[#39FF14] font-bold">Signup</span>
+          <GoSignIn className="text-[#39FF14] text-2xl animate-bounce" />
+        </p>
 
         <div className="mb-4">
           <label

@@ -1,15 +1,94 @@
-import React, { useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { IoExit } from "react-icons/io5";
 import pic1 from "../assets/default1.png";
+import { AuthContext } from "../../Context/AuthContext";
+import { toast } from "react-hot-toast";
 
 const UserProfile = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Function to toggle the sidebar
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [skills, setSkills] = useState("");
+  const [bio, setBio] = useState("");
+  const [experience, setExperience] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [profileSlugId, setProfileSlugId] = useState("");
+
+  const { handleProfileChange, getProfile, token, userProfile, logout } = useContext(AuthContext);
+
+  // Generate slug from username
+  const generateSlug = (username) => {
+    return username
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  };
+
+  // ye vala har baar mount hone pe token agar hai to profile ko get krega
+  useEffect(() => {
+    if (token) {
+      setIsLoading(true);
+      getProfile();
+      setIsLoading(false);
+    } else {
+      toast.error("Please log in to view your profile");
+    }
+  }, []);
+
+  // ye vala jab jab getProfile() call hoga check krega ki agar koi data aya to use render krega
+  useEffect(() => {
+    if (userProfile) {
+      setName(userProfile.username || "");
+      setEmail(userProfile.email || "");
+      setBio(userProfile.bio || "");
+      setSkills(userProfile.skills?.join(", ") || "");
+      setExperience(userProfile.experience || "");
+      setGithubUrl(userProfile.githubUrl || "");
+      setLinkedinUrl(userProfile.linkedinUrl || "");
+      setProfileSlugId(
+        userProfile.profileSlugId || generateSlug(userProfile.username || "")
+      );
+    }
+  }, [userProfile]);
+
+  // Update profileSlugId when username changes
+  useEffect(() => {
+    if (name && !userProfile?.profileSlugId) {
+      setProfileSlugId(generateSlug(name));
+    }
+  }, [name, userProfile]);
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const skillsArray = skills
+      .split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+    if (!profileSlugId.match(/^[a-z0-9-]+$/)) {
+      toast.error("Invalid profile slug ID format");
+      return;
+    }
+    const body = {
+      username: name,
+      email,
+      bio,
+      skills: skillsArray,
+      experience,
+      linkedinUrl,
+      githubUrl,
+      profileSlugId,
+    };
+    handleProfileChange(body);
+  };
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
   return (
     <div className="bg-gradient-to-b from-black to-gray-900 min-h-screen w-full text-white">
       <div className={`${isSidebarOpen ? "blur-sm" : ""} transition-all`}>
@@ -50,6 +129,21 @@ const UserProfile = () => {
                 </span>
               </NavLink>
               <NavLink
+                              to="/user-noti"
+                              className={({ isActive }) =>
+                                `relative group px-4 py-2 font-semibold text-xl transition ${
+                                  isActive
+                                    ? "text-[#39FF14] font-bold glow"
+                                    : "hover:text-[#39FF14]"
+                                }`
+                              }
+                            >
+                              <span className="relative">
+                                Notifications
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#39FF14] transition-all duration-300 group-hover:w-full"></span>
+                              </span>
+                            </NavLink>
+              <NavLink
                 to="/userAbout"
                 className={({ isActive }) =>
                   `relative group px-4 py-2 font-semibold text-xl transition ${
@@ -89,7 +183,7 @@ const UserProfile = () => {
           </h2>
           <button
             onClick={toggleSidebar}
-            className="text-2xl mt-4 text-gray-300 hover:text-[#39FF14] transition"
+            className="text-2xl mt-4 text-gray-300 hover:scale-105 hover:text-[#39FF14] transition"
           >
             <IoExit />
           </button>
@@ -98,7 +192,7 @@ const UserProfile = () => {
           <li>
             <NavLink
               to="/settings"
-              className="block text-xl text-gray-300 hover:text-[#39FF14] transition"
+              className="block text-xl text-gray-300 hover:scale-105 hover:text-[#39FF14] transition"
             >
               Settings
             </NavLink>
@@ -106,15 +200,15 @@ const UserProfile = () => {
           <li>
             <NavLink
               to="/notifications"
-              className="block text-xl text-gray-300 hover:text-[#39FF14] transition"
+              className="block text-xl text-gray-300 hover:scale-105 hover:text-[#39FF14] transition"
             >
               Notifications
             </NavLink>
           </li>
           <li>
             <button
-              className="block text-xl text-gray-300 hover:text-red-600 transition"
-              onClick={toggleSidebar}
+              onClick={logout}
+              className="block text-xl cursor-pointer hover:scale-105 text-gray-300 hover:text-red-600 transition"
             >
               Logout
             </button>
@@ -126,9 +220,18 @@ const UserProfile = () => {
           <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 flex items-center justify-center py-10">
             <div className="bg-gradient-to-r from-gray-900 via-gray-950 to-black rounded-2xl shadow-2xl p-8 max-w-[50vw] w-full border border-gray-700">
               <h2 className="text-3xl text-center font-bold text-[#39FF14] mb-6">
-                Create Your Profile
+                {userProfile ? "Update Your Profile" : "Create Your Profile"}
               </h2>
-              <form className="space-y-6">
+              {isLoading ? (
+                <div className="text-center text-[#39FF14]">
+                  Loading profile...
+                </div>
+              ) : !userProfile ? (
+                <div className="text-center text-gray-300">
+                  No profile found. Please create your profile below.
+                </div>
+              ) : null}
+              <form onSubmit={handleFormSubmit} className="space-y-6">
                 {/* Username */}
                 <div>
                   <label className="block text-xl font-medium text-gray-300">
@@ -138,10 +241,24 @@ const UserProfile = () => {
                     type="text"
                     name="username"
                     placeholder="Enter your name here"
-                    // value={formData.username}
-                    // onChange={handleChange}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
                     className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] outline-none transition text-white"
+                  />
+                </div>
+
+                {/* Profile Slug ID (Read-only) */}
+                <div>
+                  <label className="block text-xl font-medium text-gray-300">
+                    Profile Slug ID
+                  </label>
+                  <input
+                    type="text"
+                    name="profileSlugId"
+                    value={profileSlugId}
+                    readOnly
+                    className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
                   />
                 </div>
 
@@ -154,8 +271,8 @@ const UserProfile = () => {
                     type="email"
                     name="email"
                     placeholder="example69@gmail.com"
-                    // value={formData.email}
-                    // onChange={handleChange}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] outline-none transition text-white"
                   />
@@ -168,8 +285,8 @@ const UserProfile = () => {
                   </label>
                   <textarea
                     name="bio"
-                    // value={formData.bio}
-                    // onChange={handleChange}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
                     placeholder="Enter something interesting about you"
                     required
                     maxLength={150}
@@ -186,8 +303,8 @@ const UserProfile = () => {
                     type="text"
                     name="skills"
                     placeholder="java, c++, React"
-                    // value={formData.skills}
-                    // onChange={handleChange}
+                    value={skills}
+                    onChange={(e) => setSkills(e.target.value)}
                     required
                     className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] outline-none transition text-white"
                   />
@@ -200,8 +317,8 @@ const UserProfile = () => {
                   </label>
                   <select
                     name="experience"
-                    // value={formData.experience}
-                    // onChange={handleChange}
+                    value={experience}
+                    onChange={(e) => setExperience(e.target.value)}
                     required
                     className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] outline-none transition text-white"
                   >
@@ -220,11 +337,11 @@ const UserProfile = () => {
                     GitHub URL
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     name="githubUrl"
                     placeholder="https://github.com/"
-                    // value={formData.githubUrl}
-                    // onChange={handleChange}
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
                     className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] outline-none transition text-white"
                   />
                 </div>
@@ -235,11 +352,11 @@ const UserProfile = () => {
                     LinkedIn URL
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     name="linkedinUrl"
                     placeholder="https://linkedin.com/"
-                    // value={formData.linkedinUrl}
-                    // onChange={handleChange}
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
                     className="w-full mt-1 p-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] outline-none transition text-white"
                   />
                 </div>
@@ -247,9 +364,12 @@ const UserProfile = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-[30vw] ml-28 mt-4 text-2xl font-semibold py-3 px-4 bg-[#39FF14] text-black cursor-pointer rounded-lg shadow-md hover:bg-[#28CC0F] transition duration-300"
+                  disabled={isLoading}
+                  className={`w-[30vw] ml-28 mt-4 text-2xl font-semibold py-3 px-4 bg-[#39FF14] text-black cursor-pointer rounded-lg shadow-md hover:bg-[#28CC0F] transition duration-300 ${
+                    isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  Create Profile
+                  {userProfile ? "Update Profile" : "Create Profile"}
                 </button>
               </form>
             </div>

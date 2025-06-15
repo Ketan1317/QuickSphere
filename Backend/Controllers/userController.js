@@ -79,10 +79,8 @@ const deleteUserAccount = async (req, res) => {
 
 const checkAuth = (req, res) => {
   try {
-    console.log("checkAuth: Received request, req.user:", req.user);
     const user = req.user;
     if (!user) {
-      console.log("checkAuth: No user found in req.user");
       return res.status(401).json({ success: false, message: "User not authenticated" });
     }
     return res.status(200).json({ success: true, user });
@@ -93,32 +91,38 @@ const checkAuth = (req, res) => {
 };
 
 const applyingForJob = async (req, res) => {
-    try {
-        const user = req.user;
-        if (!user || !user._id) {
-            return res.status(403).json({ success: false, message: "Not Authenticated" })
-        }
-        const userId = user._id;
-        const jobId = req.params.jobId // params mein daldenge jobId
-        const job = await Job.findById(jobId)
-
-        if (!job) {
-            return res.status(404).json({ success: false, message: "Job Not available" })
-        }
-        if (job.applicants.includes(userId)) {
-            return res.status(404).json({ success: false, message: "You have already applied for this job" })
-        }
-
-        job.applicants.push(userId)
-        await job.save();
-
-        res.status(200).json({ success: true, message: "Successfully applied for the job" });
-
-    } catch (error) {
-        console.error(error.message)
-        res.status(500).json({ success: false, message: error.message });
+  try {
+    const user = req.user;
+    if (!user || !user._id) {
+      return res.status(403).json({ success: false, message: "Not Authenticated" });
     }
-}
+
+    const userId = user._id;
+    const jobId = req.params.jobId; 
+
+    const job = await Job.findOne({ jobId });
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not available" });
+    }
+
+    if (job.applicants.includes(userId)) {
+      return res.status(400).json({ success: false, message: "You have already applied for this job" });
+    }
+
+
+    job.applicants.push(userId);
+    await job.save();
+
+    const userToUpdate = await User.findById(userId);
+    userToUpdate.appliedJobs.push({ jobId: job._id }); // Store the job's MongoDB _id
+    await userToUpdate.save();
+
+    res.status(200).json({ success: true, message: "Successfully applied for the job" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 const markJobFavourite = async (req, res) => {
     try {

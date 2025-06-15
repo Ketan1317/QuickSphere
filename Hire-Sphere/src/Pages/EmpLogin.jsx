@@ -3,21 +3,21 @@ import { FiLogIn } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { TbLockPassword } from "react-icons/tb";
 import { HiOutlineMailOpen } from "react-icons/hi";
-import { AuthContext } from "../../Context/AuthContext";
+import { EmpContext } from "../../Context/EmpContext";
 
 const EmpLogin = () => {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const navigate = useNavigate();
 
-  const { login } = useContext(AuthContext);
+  const { empLogin } = useContext(EmpContext);
 
   const formSubmitHandler = (e) => {
     e.preventDefault();
-    const userType = "api/jobSeeker";
     const body = { email, password: pass };
 
-    login(body, userType);
+    empLogin(body);
+    
     setEmail("");
     setPass("");
   };

@@ -1,43 +1,20 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { IoExit } from "react-icons/io5";
 import pic1 from "../assets/default1.png";
-import JobCard from "../Components/JobCard";
 import { AuthContext } from "../../Context/AuthContext";
 
-const UserDashboard = () => {
+const UserContact = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { logout, getAllJobs, jobsData } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
-
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("All");
-
-  useEffect(() => {
-    const fetchJobs = async () => {
-      setLoading(true);
-      await getAllJobs();
-      setLoading(false);
-    };
-    fetchJobs();
-  }, []);
+  const { logout } = useContext(AuthContext);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const filteredJobs = jobsData?.filter((job) => {
-    const matchesSearch = job.jobTitle
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesType =
-      filterType === "All" || job.employmentType === filterType;
-    return matchesSearch && matchesType;
-  });
-
   return (
     <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 min-h-screen w-full text-white font-sans">
+      {/* Navbar (Untouched) */}
       <div className={`${isSidebarOpen ? "blur-sm" : ""} transition-all`}>
         <div className="relative">
           <nav className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-gray-900 via-gray-950 to-black text-white shadow-lg">
@@ -46,7 +23,7 @@ const UserDashboard = () => {
             </div>
             <div className="flex gap-6">
               <NavLink
-                to="/userDashboard"
+                to="/empDashboard"
                 className={({ isActive }) =>
                   `relative group px-4 font-semibold text-xl py-2 transition ${
                     isActive
@@ -61,7 +38,7 @@ const UserDashboard = () => {
                 </span>
               </NavLink>
               <NavLink
-                to="/profile"
+                to="/create-job"
                 className={({ isActive }) =>
                   `relative group px-4 py-2 font-semibold text-xl transition ${
                     isActive
@@ -71,12 +48,12 @@ const UserDashboard = () => {
                 }
               >
                 <span className="relative">
-                  Profile
+                  Create Opening
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#39FF14] transition-all duration-300 group-hover:w-full"></span>
                 </span>
               </NavLink>
               <NavLink
-                to="/user-noti"
+                to="/your-jobs"
                 className={({ isActive }) =>
                   `relative group px-4 py-2 font-semibold text-xl transition ${
                     isActive
@@ -86,12 +63,12 @@ const UserDashboard = () => {
                 }
               >
                 <span className="relative">
-                  Notifications
+                  Jobs
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#39FF14] transition-all duration-300 group-hover:w-full"></span>
                 </span>
               </NavLink>
               <NavLink
-                to="/userAbout"
+                to="/emp-contact"
                 className={({ isActive }) =>
                   `relative group px-4 py-2 font-semibold text-xl transition ${
                     isActive
@@ -101,7 +78,7 @@ const UserDashboard = () => {
                 }
               >
                 <span className="relative">
-                  About
+                  Contact
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#39FF14] transition-all duration-300 group-hover:w-full"></span>
                 </span>
               </NavLink>
@@ -121,6 +98,7 @@ const UserDashboard = () => {
       </div>
 
       <div className="relative">
+        {/* Sidebar (Untouched) */}
         <div
           className={`fixed top-0 right-0 h-full w-64 bg-gray-900 text-white shadow-lg transform transition-transform duration-300 z-20 ${
             isSidebarOpen ? "translate-x-0" : "translate-x-full"
@@ -197,91 +175,140 @@ const UserDashboard = () => {
           </ul>
         </div>
 
-        {/* Main Content Section */}
-        <div className={`${isSidebarOpen ? "blur-sm" : ""} transition-all px-6 lg:px-12 py-8`}>
+        {/* Contact Page Content */}
+        <div
+          className={`${
+            isSidebarOpen ? "blur-sm" : ""
+          } transition-all px-6 lg:px-12 py-8`}
+        >
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#39FF14] mb-2">
-              Find Your Dream Job
+              Contact Us
             </h1>
             <p className="text-gray-400 text-lg">
-              Explore opportunities tailored for you on HireSphere
+              We're here to help! Reach out with any questions or feedback.
             </p>
           </div>
 
-          {/* Search and Filter Section */}
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Search jobs by title..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all"
-              />
-              <svg
-                className="absolute right-3 top-3 h-6 w-6 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Contact Form Section */}
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+              <h2 className="text-2xl font-semibold text-white mb-4">
+                Send Us a Message
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 mb-1" htmlFor="name">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    placeholder="Your Name"
+                    className="w-full px-4 py-3 bg-gray-900 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 mb-1" htmlFor="email">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    placeholder="Your Email"
+                    className="w-full px-4 py-3 bg-gray-900 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 mb-1" htmlFor="message">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    placeholder="Your Message"
+                    rows="4"
+                    className="w-full px-4 py-3 bg-gray-900 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all resize-none"
+                  />
+                </div>
+                <button className="w-full bg-[#39FF14] text-black text-lg px-6 py-3 rounded-lg font-semibold hover:bg-[#28CC0F] transition-all duration-300 shadow-md">
+                  Submit
+                </button>
+              </div>
             </div>
-            <div className="relative">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all appearance-none w-full md:w-48"
-              >
-                <option value="All">All Types</option>
-                <option value="Full-Time">Full-Time</option>
-                <option value="Part-Time">Part-Time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-              </select>
-              <svg
-                className="absolute right-3 top-4 h-5 w-5 text-gray-400 pointer-events-none"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
 
-          {/* Job Listings Section */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              Available Jobs
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading ? (
-                <p className="text-gray-400 col-span-full">
-                  Loading jobs...
-                </p>
-              ) : filteredJobs && filteredJobs.length > 0 ? (
-                filteredJobs.map((job) => (
-                  <JobCard key={job.jobId} job={job} />
-                ))
-              ) : (
-                <p className="text-gray-400 col-span-full">
-                  No jobs match your criteria.
-                </p>
-              )}
+            {/* Contact Information Section */}
+            <div className="space-y-6">
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h2 className="text-2xl font-semibold text-white mb-4">
+                  Get in Touch
+                </h2>
+                <div className="space-y-4 text-gray-300">
+                  <div className="flex items-center gap-3">
+                    <svg
+                      className="h-6 w-6 text-[#39FF14]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <p>support@hiresphere.com</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <svg
+                      className="h-6 w-6 text-[#39FF14]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <p>+91 987-654-3210</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <svg
+                      className="h-6 w-6 text-[#39FF14]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M17.657 16.243l-4.243-4.243m0 0L9.172 7.757M12 12l4.243-4.243M12 12l-4.243 4.243M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <p>HireSphere Headquarters, Mumbai, India</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Map Placeholder */}
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h2 className="text-2xl font-semibold text-white mb-4">
+                  Our Location
+                </h2>
+                <div className="h-48 bg-gray-700 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-400">
+                    [Map Placeholder - HireSphere HQ, Mumbai]
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -290,4 +317,4 @@ const UserDashboard = () => {
   );
 };
 
-export default UserDashboard;
+export default UserContact;
